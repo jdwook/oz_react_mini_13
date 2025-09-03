@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -66,3 +70,7 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+.swiper-button-next,
+.swiper-button-prev { color: #9b87f5; }
+.swiper-pagination-bullet { background: rgba(255,255,255,.45); }
+.swiper-pagination-bullet-active { background: #ffffff; }
