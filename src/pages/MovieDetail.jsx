@@ -16,7 +16,7 @@ export default function MovieDetail() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 text-white">
+    <div className="max-w-6xl px-4 py-6 mx-auto text-white">
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-1">
           <img
@@ -25,7 +25,7 @@ export default function MovieDetail() {
             className="rounded-lg shadow-lg"
           />
         </div>
-        <div className="md:col-span-2 space-y-4">
+        <div className="space-y-4 md:col-span-2">
           <h1 className="text-3xl font-bold">{movie.title}</h1>
           <p className="text-yellow-400">평점: {movie.vote_average}</p>
           <p className="leading-6">{movie.overview || "줄거리 정보가 없습니다."}</p>
