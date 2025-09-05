@@ -1,14 +1,15 @@
 import { Outlet } from "react-router-dom";
-import NavBar from "../components/NavBar";
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-white">
-      {/* ✅ NavBar는 전체 폭 */}
-      <NavBar />
+    <div className="min-h-screen text-white bg-gray-950">
+      {/* 공통 헤더 */}
+      <header className="p-4 text-lg font-bold bg-gray-800">
+        🎬 My Movie App
+      </header>
 
-      {/* ✅ 기본 컨텐츠는 중앙 정렬 */}
-      <main className="mx-auto max-w-7xl px-4 py-6">
+      {/* 페이지 콘텐츠 */}
+      <main className="w-full">
         <Outlet />
       </main>
     </div>
