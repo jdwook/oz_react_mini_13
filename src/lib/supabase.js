@@ -1,11 +1,22 @@
-// src/lib/supabase.js
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_PROJECT_URL;
-const key = import.meta.env.VITE_SUPABASE_API_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_API_KEY;
 
-if (!url || !key) {
-  console.warn("[supabase] VITE_SUPABASE_PROJECT_URL / VITE_SUPABASE_API_KEY가 필요합니다.");
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Missing env: VITE_SUPABASE_PROJECT_URL / VITE_SUPABASE_API_KEY");
 }
 
-export const supabase = createClient(url, key); // ✅ named export
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: localStorage,
+    storageKey: "ozwave-auth", // ← 위 AUTH_STORAGE_KEY와 값만 동일하면 됨
+  },
+});
+
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  window.supabase = supabase; // 디버깅 편의
+}
