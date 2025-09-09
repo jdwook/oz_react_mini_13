@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, NavLink, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import useDebounce from "../hooks/useDebounce.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -11,6 +11,7 @@ export default function NavBar() {
   const dq = useDebounce(q, 500);
 
   const nav = useNavigate();
+  const loc = useLocation(); // ✅ 검색 시 홈으로 보내기 위해 사용
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -26,6 +27,7 @@ export default function NavBar() {
     return () => document.removeEventListener("pointerdown", handleDocPointerDown);
   }, [menuOpen]);
 
+  // 🔎 디바운스된 검색어를 URL 파라미터로 반영 + 검색어가 있으면 홈으로 이동
   useEffect(() => {
     const next = new URLSearchParams(params);
     if (dq.trim()) {
@@ -36,6 +38,11 @@ export default function NavBar() {
       next.delete("page");
     }
     setParams(next, { replace: false });
+
+    // ✅ 다른 페이지에서 입력해도 홈으로 이동하여 검색 결과 노출
+    if (dq.trim() && loc.pathname !== "/") {
+      nav(`/?${next.toString()}`, { replace: false });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dq]);
 
@@ -49,10 +56,12 @@ export default function NavBar() {
     // z-index를 더 높여 위에 깔리게
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0B1020]/70 backdrop-blur-md">
       <nav className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
+        {/* 로고 */}
         <Link to="/" className="text-xl font-extrabold tracking-tight">
           <span className="text-[#3366FF]">OZ</span>Wave
         </Link>
 
+        {/* 메뉴 */}
         <div className="ml-6 hidden gap-6 md:flex">
           {[
             { to: "/", label: "홈" },
@@ -76,6 +85,7 @@ export default function NavBar() {
 
         {/* 오른쪽: 검색 + 계정 */}
         <div className="ml-auto flex items-center gap-3">
+          {/* 🔎 검색 인풋 (버튼 없음, 자동 검색) */}
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -103,7 +113,7 @@ export default function NavBar() {
           ) : (
             <div className="relative" ref={menuRef}>
               <button
-                type="button"                       // ✅ 명시
+                type="button"
                 onClick={() => setMenuOpen((v) => !v)}
                 className="w-9 h-9 rounded-full overflow-hidden bg-white/10 focus:ring-2 focus:ring-indigo-300"
                 title={user.userName || user.email}
@@ -118,7 +128,7 @@ export default function NavBar() {
               {menuOpen && (
                 <div
                   className="absolute right-0 mt-2 w-44 rounded-xl bg-[#121833] shadow-xl
-                             border border-white/10 p-1 z-[9999]"   // ✅ 매우 높은 z-index
+                             border border-white/10 p-1 z-[9999]"
                   role="menu"
                   aria-label="account menu"
                 >
