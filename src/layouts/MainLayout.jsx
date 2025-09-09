@@ -42,7 +42,7 @@ export default function MainLayout() {
       <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0B1020]/70 backdrop-blur-md">
         <nav className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
           <Link to="/" className="text-xl font-extrabold tracking-tight">
-            <span style={{ color: brand.accent }}>Oz</span>wave
+            <span style={{ color: brand.accent }}>OZ</span>wave
           </Link>
 
           <div className="ml-6 hidden gap-6 md:flex">
