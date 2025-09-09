@@ -28,9 +28,7 @@ export default function Home() {
     (async () => {
       try {
         setLoading(true);
-        const data = q
-          ? await searchMovies(q, page)
-          : await fetchPopularMovies(page);
+        const data = q ? await searchMovies(q, page) : await fetchPopularMovies(page);
         const safe = (data.results || []).filter((m) => m.adult === false);
         if (alive) setMovies(safe);
       } catch (e) {
@@ -40,9 +38,7 @@ export default function Home() {
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [q, page]);
 
   const canLoop = movies.length > displayed;
@@ -54,11 +50,8 @@ export default function Home() {
           {q ? `검색 결과: “${q}”` : "인기 영화"}
         </h1>
 
-        {/* 슬라이드 */}
         {loading ? (
-          <div className="mb-10">
-            <SkeletonDetail />
-          </div>
+          <div className="mb-10"><SkeletonDetail /></div>
         ) : movies.length > 0 ? (
           <Swiper
             key={`pop-${movies.length}-${displayed}`}
@@ -66,17 +59,10 @@ export default function Home() {
             navigation
             spaceBetween={20}
             slidesPerView={2}
-            breakpoints={{
-              640: { slidesPerView: 3 },
-              1024: { slidesPerView: 5 },
-            }}
+            breakpoints={{ 640: { slidesPerView: 3 }, 1024: { slidesPerView: 5 } }}
             loop={canLoop}
             rewind={!canLoop}
-            autoplay={{
-              delay: 3000,
-              disableOnInteraction: false,
-              pauseOnMouseEnter: true,
-            }}
+            autoplay={{ delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             className="mb-10"
           >
             {movies.map((m) => (
@@ -102,7 +88,6 @@ export default function Home() {
           <p className="mb-10 text-white/60">검색 결과가 없습니다.</p>
         )}
 
-        {/* 그리드 */}
         <div className="grid grid-cols-2 gap-6 pb-16 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {loading
             ? Array.from({ length: 10 }).map((_, idx) => <SkeletonCard key={idx} />)
