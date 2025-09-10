@@ -1,7 +1,10 @@
+// src/pages/MovieDetail.jsx
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { fetchMovieDetails, tmdbImage } from "../api/tmdb";
-import SkeletonDetail from "../components/SkeletonDetail";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+import { fetchMovieDetails, tmdbImage } from "../api/tmdb.js";
+import SkeletonDetail from "../components/SkeletonDetail.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import bookmark from "../lib/bookmark.js";
 
 function Info({ label, value }) {
   return (
@@ -14,17 +17,38 @@ function Info({ label, value }) {
 
 export default function MovieDetail() {
   const { id } = useParams();
+  const nav = useNavigate();
+  const loc = useLocation();
+  const { user } = useAuth();
+
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookmarked, setBookmarked] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setLoading(true);
+    setError("");
     fetchMovieDetails(id)
-      .then((d) => setMovie(d))
+      .then((d) => {
+        setMovie(d);
+        setBookmarked(bookmark.has(d.id));
+      })
       .catch((e) => setError(e.message || "불러오기 실패"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const onBookmark = () => {
+    if (!user) {
+      alert("로그인이 필요합니다.");
+      const next = encodeURIComponent(loc.pathname + loc.search);
+      nav(`/login?next=${next}`);
+      return;
+    }
+    if (!movie) return;
+    setBookmarked(bookmark.toggle(movie));
+  };
 
   if (loading) return <SkeletonDetail />;
   if (error) {
@@ -41,7 +65,7 @@ export default function MovieDetail() {
 
   return (
     <div className="w-full min-h-screen text-white bg-gray-950">
-      {/* 히어로: 배경만 보여주고 겹치지 않도록 충분한 하단 패딩 제거 */}
+      {/* 히어로 */}
       <header
         className="relative w-full min-h-[40vh] md:min-h-[46vh] flex items-end"
         style={{
@@ -65,19 +89,33 @@ export default function MovieDetail() {
               {movie.title}
             </h1>
             {movie.tagline && (
-              <p className="mt-2 text-sm text-white/80 md:text-base">
-                “{movie.tagline}”
-              </p>
+              <p className="mt-2 text-sm text-white/80 md:text-base">“{movie.tagline}”</p>
             )}
+
+            {/* ✅ 상세페이지 전용 북마크 버튼 */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={onBookmark}
+                className={
+                  "px-4 py-2 rounded-lg text-sm font-medium border transition " +
+                  (bookmarked
+                    ? "bg-[#3366FF] border-[#3366FF] text-white hover:brightness-110"
+                    : "bg-white/10 border-white/20 text-white hover:bg-white/20")
+                }
+              >
+                {bookmarked ? "북마크 해제" : "북마크"}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* 본문: 히어로 아래에서 시작 (겹침 없음) */}
+      {/* 본문 */}
       <main className="w-full px-6">
-        <div className="max-w-6xl pt-10 pb-16 mx-auto"> {/* ← pt-10로 여백만 줌 */}
+        <div className="max-w-6xl pt-10 pb-16 mx-auto">
           <div className="flex flex-col items-start gap-8 md:flex-row md:gap-10">
-            {/* 포스터: 음수 마진/translate 제거 */}
+            {/* 포스터 */}
             <div className="shrink-0">
               {movie.poster_path ? (
                 <img
@@ -109,23 +147,13 @@ export default function MovieDetail() {
                       : "-"
                   }
                 />
-                <Info
-                  label="상영시간"
-                  value={movie.runtime ? `${movie.runtime}분` : "-"}
-                />
+                <Info label="상영시간" value={movie.runtime ? `${movie.runtime}분` : "-"} />
                 <Info
                   label="장르"
-                  value={
-                    movie.genres?.length
-                      ? movie.genres.map((g) => g.name).join(", ")
-                      : "-"
-                  }
+                  value={movie.genres?.length ? movie.genres.map((g) => g.name).join(", ") : "-"}
                 />
                 <Info label="원제" value={movie.original_title || "-"} />
-                <Info
-                  label="언어"
-                  value={movie.original_language?.toUpperCase() || "-"}
-                />
+                <Info label="언어" value={movie.original_language?.toUpperCase() || "-"} />
               </div>
             </section>
           </div>

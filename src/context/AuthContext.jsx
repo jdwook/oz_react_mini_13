@@ -1,85 +1,68 @@
-import { createContext, useContext, useEffect, useState } from "react";
+// src/context/AuthContext.jsx
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
+const LS_KEY = "userInfo";
 
-function getCachedUser() {
-  try {
-    let sbKey = null;
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith("sb-") && k.endsWith("-auth-token")) { sbKey = k; break; }
-    }
-    if (!sbKey) return null;
-    const parsed = JSON.parse(localStorage.getItem(sbKey) || "{}");
-    const cur = parsed.currentSession || parsed.session || parsed;
-    const u = cur?.user;
-    if (!u?.id) return null;
-    return {
-      id: u.id,
-      email: u.email || "",
-      userName: u.user_metadata?.name || u.user_metadata?.user_name || "",
-      profileImageUrl:
-        u.user_metadata?.avatar_url ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(u.user_metadata?.name || u.email || "user")}&background=3366FF&color=FFFFFF&bold=true&size=96&format=png`,
-    };
-  } catch { return null; }
+function normUser(sessionUser) {
+  if (!sessionUser) return null;
+  const { id, email, user_metadata } = sessionUser;
+  return {
+    id,
+    email: email ?? "",
+    userName: user_metadata?.name || user_metadata?.user_name || "",
+    profileImageUrl:
+      user_metadata?.avatar_url ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        user_metadata?.name || email || "user"
+      )}&background=3366FF&color=FFFFFF&bold=true&size=96&format=png`,
+  };
 }
 
 export function AuthProvider({ children }) {
-  const cached = getCachedUser();
-  const [user, setUser] = useState(cached);
-  const [loading, setLoading] = useState(!cached);
+  const [user, setUser] = useState(null);
+  const [ready, setReady] = useState(false);
 
-  // ✅ 반드시 Context에서 logout 함수 제공
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      console.error("signOut error:", e);
-    } finally {
-      localStorage.removeItem("userInfo");
-      setUser(null);
-    }
-  };
-
+  // 앱 시작 시 세션 로드
   useEffect(() => {
     let alive = true;
     (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!alive) return;
-        if (session?.user) {
-          setUser(getCachedUser() || {
-            id: session.user.id,
-            email: session.user.email || "",
-            userName: session.user.user_metadata?.name || session.user.user_metadata?.user_name || "",
-            profileImageUrl:
-              session.user.user_metadata?.avatar_url ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.user_metadata?.name || session.user.email || "user")}&background=3366FF&color=FFFFFF&bold=true&size=96&format=png`,
-          });
-        } else setUser(null);
-      } finally {
-        if (alive) setLoading(false);
+      const { data } = await supabase.auth.getSession();
+      const u = normUser(data.session?.user);
+      if (alive) {
+        setUser(u);
+        if (u) localStorage.setItem(LS_KEY, JSON.stringify(u));
+        setReady(true);
       }
     })();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (!alive) return;
-      if (session?.user) setUser(getCachedUser());
-      else {
-        setUser(null);
-        localStorage.removeItem("userInfo");
-      }
-    });
-    return () => { alive = false; sub.subscription?.unsubscribe?.(); };
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  // 세션 변경 구독 (로그인/로그아웃/토큰갱신)
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      const u = normUser(session?.user);
+      setUser(u);
+      if (u) localStorage.setItem(LS_KEY, JSON.stringify(u));
+      else localStorage.removeItem(LS_KEY);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  async function logout() {
+    await supabase.auth.signOut();
+    setUser(null);
+    localStorage.removeItem(LS_KEY);
+  }
+
+  const value = useMemo(() => ({ user, ready, logout }), [user, ready]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}

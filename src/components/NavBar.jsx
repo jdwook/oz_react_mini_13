@@ -1,3 +1,4 @@
+// src/components/NavBar.jsx
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import useDebounce from "../hooks/useDebounce.js";
@@ -11,23 +12,24 @@ export default function NavBar() {
   const dq = useDebounce(q, 500);
 
   const nav = useNavigate();
-  const loc = useLocation(); // ✅ 검색 시 홈으로 보내기 위해 사용
+  const loc = useLocation();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // 드롭다운 외부 클릭 시 닫기
   const menuRef = useRef(null);
+
+  // 바깥 클릭 시 드롭다운 닫기
   useEffect(() => {
-    function handleDocPointerDown(e) {
+    function onDocDown(e) {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
       }
     }
-    document.addEventListener("pointerdown", handleDocPointerDown);
-    return () => document.removeEventListener("pointerdown", handleDocPointerDown);
+    document.addEventListener("pointerdown", onDocDown);
+    return () => document.removeEventListener("pointerdown", onDocDown);
   }, [menuOpen]);
 
-  // 🔎 디바운스된 검색어를 URL 파라미터로 반영 + 검색어가 있으면 홈으로 이동
+  // 검색어 ↔ URL 동기화
   useEffect(() => {
     const next = new URLSearchParams(params);
     if (dq.trim()) {
@@ -38,8 +40,6 @@ export default function NavBar() {
       next.delete("page");
     }
     setParams(next, { replace: false });
-
-    // ✅ 다른 페이지에서 입력해도 홈으로 이동하여 검색 결과 노출
     if (dq.trim() && loc.pathname !== "/") {
       nav(`/?${next.toString()}`, { replace: false });
     }
@@ -47,22 +47,21 @@ export default function NavBar() {
   }, [dq]);
 
   const onLogout = async () => {
-    await logout(); // Context에서 세션/캐시 제거 + setUser(null)
+    await logout();
     setMenuOpen(false);
     nav("/", { replace: true });
   };
 
   return (
-    // z-index를 더 높여 위에 깔리게
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0B1020]/70 backdrop-blur-md">
-      <nav className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
+      <nav className="flex items-center gap-4 px-4 mx-auto h-14 max-w-7xl">
         {/* 로고 */}
         <Link to="/" className="text-xl font-extrabold tracking-tight">
           <span className="text-[#3366FF]">OZ</span>Wave
         </Link>
 
-        {/* 메뉴 */}
-        <div className="ml-6 hidden gap-6 md:flex">
+        {/* 상단 메뉴 */}
+        <div className="hidden gap-6 ml-6 md:flex">
           {[
             { to: "/", label: "홈" },
             { to: "/trending", label: "실시간" },
@@ -83,9 +82,8 @@ export default function NavBar() {
           ))}
         </div>
 
-        {/* 오른쪽: 검색 + 계정 */}
-        <div className="ml-auto flex items-center gap-3">
-          {/* 🔎 검색 인풋 (버튼 없음, 자동 검색) */}
+        {/* 검색 + 계정 */}
+        <div className="flex items-center gap-3 ml-auto">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -112,33 +110,48 @@ export default function NavBar() {
             </div>
           ) : (
             <div className="relative" ref={menuRef}>
+              {/* 아바타 버튼: 드롭다운 토글 */}
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="w-9 h-9 rounded-full overflow-hidden bg-white/10 focus:ring-2 focus:ring-indigo-300"
+                className="overflow-hidden rounded-full w-9 h-9 focus:ring-2 focus:ring-indigo-300"
                 title={user.userName || user.email}
               >
                 <img
                   src={user.profileImageUrl}
                   alt="avatar"
-                  className="w-full h-full object-cover pointer-events-none"
+                  className="object-cover w-full h-full pointer-events-none"
                 />
               </button>
 
+              {/* 드롭다운 */}
               {menuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-44 rounded-xl bg-[#121833] shadow-xl
-                             border border-white/10 p-1 z-[9999]"
+                  className="absolute right-0 mt-2 w-44 rounded-xl bg-[#121833] shadow-xl border border-white/10 p-1 z-[9999]"
                   role="menu"
-                  aria-label="account menu"
                 >
                   <div className="px-3 py-2 text-xs text-white/60">
                     {user.userName || user.email}
                   </div>
+
+                  {/* ✅ 마이페이지: onMouseDown에서 내비게이션 → 언마운트 경합 방지 */}
+                  <Link
+                    to="/mypage"
+                    onMouseDown={(e) => {
+                      e.preventDefault();      // Link 기본 내비게이션 취소
+                      e.stopPropagation();     // 바깥 pointerdown에 닫히기 전에
+                      nav("/mypage");          // 먼저 이동
+                      setMenuOpen(false);      // 그 다음 닫기
+                    }}
+                    className="block w-full px-3 py-2 text-sm text-left text-white rounded-lg hover:bg-white/10"
+                  >
+                    마이페이지
+                  </Link>
+
                   <button
                     type="button"
                     onClick={onLogout}
-                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-white/10"
+                    className="w-full px-3 py-2 text-sm text-left text-red-400 rounded-lg hover:bg-white/10"
                   >
                     로그아웃
                   </button>
