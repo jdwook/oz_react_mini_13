@@ -1,3 +1,4 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,7 +20,7 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 링크 스타일 */
+/* 링크 스타일 (필요시 프로젝트 톤에 맞게 조정) */
 a {
   font-weight: 500;
   color: #646cff;
@@ -29,14 +30,13 @@ a:hover {
   color: #535bf2;
 }
 
-/* ✅ body: 중앙정렬 제거, 풀스크린 배경 적용 */
+/* ✅ 전역: 중앙정렬/컨테이너 제한 제거 + 다크 배경 */
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-
   display: block;              /* flex/center 제거 */
-  background-color: #0b1220;   /* 전역 배경색 (Tailwind bg-gray-950) */
+  background-color: #0b1220;   /* 전역 배경색 */
   color: white;
 }
 
@@ -46,7 +46,7 @@ h1 {
   line-height: 1.1;
 }
 
-/* 버튼 */
+/* 버튼 기본 */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -66,7 +66,7 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-/* 라이트 모드 대응 */
+/* 라이트 모드 대응(선택) */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -80,10 +80,10 @@ button:focus-visible {
   }
 }
 
-/* Swiper UI 커스텀 */
+/* ===== Swiper UI 커스텀 ===== */
 .swiper-button-next,
 .swiper-button-prev {
-  color: #9b87f5;
+  color: #ffffff;               /* 내비게이션 화살표 흰색 */
 }
 .swiper-pagination-bullet {
   background: rgba(255, 255, 255, 0.45);
@@ -91,3 +91,10 @@ button:focus-visible {
 .swiper-pagination-bullet-active {
   background: #ffffff;
 }
+
+/* (선택) 스크롤바 살짝 정리하고 싶다면 */
+/*
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.25); }
+*/

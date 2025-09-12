@@ -18,7 +18,6 @@ export default function NavBar() {
 
   const menuRef = useRef(null);
 
-  // 바깥 클릭 시 드롭다운 닫기
   useEffect(() => {
     function onDocDown(e) {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target)) {
@@ -29,7 +28,6 @@ export default function NavBar() {
     return () => document.removeEventListener("pointerdown", onDocDown);
   }, [menuOpen]);
 
-  // 검색어 ↔ URL 동기화
   useEffect(() => {
     const next = new URLSearchParams(params);
     if (dq.trim()) {
@@ -53,8 +51,8 @@ export default function NavBar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0B1020]/70 backdrop-blur-md">
-      <nav className="flex items-center gap-4 px-4 mx-auto h-14 max-w-7xl">
+    <header className="sticky top-0 z-50 w-screen border-b border-white/10 bg-[#0B1020]/70 backdrop-blur-md">
+      <nav className="flex items-center gap-4 px-4 h-14 md:px-6">
         {/* 로고 */}
         <Link to="/" className="text-xl font-extrabold tracking-tight">
           <span className="text-[#3366FF]">OZ</span>Wave
@@ -110,7 +108,6 @@ export default function NavBar() {
             </div>
           ) : (
             <div className="relative" ref={menuRef}>
-              {/* 아바타 버튼: 드롭다운 토글 */}
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
@@ -124,7 +121,6 @@ export default function NavBar() {
                 />
               </button>
 
-              {/* 드롭다운 */}
               {menuOpen && (
                 <div
                   className="absolute right-0 mt-2 w-44 rounded-xl bg-[#121833] shadow-xl border border-white/10 p-1 z-[9999]"
@@ -134,14 +130,13 @@ export default function NavBar() {
                     {user.userName || user.email}
                   </div>
 
-                  {/* ✅ 마이페이지: onMouseDown에서 내비게이션 → 언마운트 경합 방지 */}
                   <Link
                     to="/mypage"
                     onMouseDown={(e) => {
-                      e.preventDefault();      // Link 기본 내비게이션 취소
-                      e.stopPropagation();     // 바깥 pointerdown에 닫히기 전에
-                      nav("/mypage");          // 먼저 이동
-                      setMenuOpen(false);      // 그 다음 닫기
+                      e.preventDefault();
+                      e.stopPropagation();
+                      nav("/mypage");
+                      setMenuOpen(false);
                     }}
                     className="block w-full px-3 py-2 text-sm text-left text-white rounded-lg hover:bg-white/10"
                   >
